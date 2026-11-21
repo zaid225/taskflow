@@ -1,6 +1,6 @@
-# React + TypeScript + Vite
+# TaskFlow
 
-This template provides a minimal setup to get React working in Vite with HMR and some ESLint rules.
+Run `npm run dev` to open the TaskFlow design-system preview. It uses Tailwind CSS v4, shadcn/ui, and the customized tweakcn Modern Minimal theme. Global styles are in `src/styles/globals.css`, and generated components are in `src/components/ui`. The Dark mode button switches appearance and saves the preference in the current browser.
 
 Currently, two official plugins are available:
 
