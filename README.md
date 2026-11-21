@@ -1,6 +1,6 @@
 # TaskFlow
 
-Run `npm run dev` to open the TaskFlow design-system preview. It uses Tailwind CSS v4, shadcn/ui, and the customized tweakcn Modern Minimal theme. Global styles are in `src/styles/globals.css`, and generated components are in `src/components/ui`. The Dark mode button switches appearance and saves the preference in the current browser.
+Run `npm run dev` to open the TaskFlow dashboard. Overview, My Tasks, and Board share a static demonstration dataset. The component preview is available at `/design-system`. It uses Tailwind CSS v4, shadcn/ui, and the customized tweakcn Modern Minimal theme. Global styles are in `src/styles/globals.css`, and generated components are in `src/components/ui`. The Dark mode button switches appearance and saves the preference in the current browser.
 
 Currently, two official plugins are available:
 

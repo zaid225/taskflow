@@ -1,50 +1,23 @@
-import { useLayoutEffect, useRef, useState } from 'react'
+import { useRef, useState } from 'react'
 import { Badge } from '@/components/ui/badge'
 import { Button } from '@/components/ui/button'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
 
-const themeStorageKey = 'taskflow-theme'
-
-export function App() {
+export function DesignSystemPage() {
   const titleInput = useRef<HTMLInputElement>(null)
   const [title, setTitle] = useState('Review design system')
-  const [dark, setDark] = useState(() => {
-    try {
-      return localStorage.getItem(themeStorageKey) === 'dark'
-    } catch {
-      return false
-    }
-  })
-
-  useLayoutEffect(() => {
-    document.documentElement.classList.toggle('dark', dark)
-  }, [dark])
-
-  function toggleTheme() {
-    const nextDark = !dark
-    setDark(nextDark)
-
-    try {
-      localStorage.setItem(themeStorageKey, nextDark ? 'dark' : 'light')
-    } catch {
-      // The current page still switches appearance when storage is unavailable.
-    }
-  }
 
   return (
-    <main className="mx-auto flex min-h-svh w-full max-w-2xl flex-col justify-center gap-8 px-5 py-12 sm:px-8">
+    <div className="mx-auto flex w-full max-w-2xl flex-col gap-8">
       <header className="flex flex-wrap items-start justify-between gap-4">
         <div className="space-y-2">
-          <h1 className="text-4xl font-semibold tracking-tight sm:text-5xl">TaskFlow</h1>
+          <h1 className="text-4xl font-semibold tracking-tight sm:text-5xl">Design system</h1>
           <p className="text-muted-foreground">
             Preview the buttons, fields, and badges used to organize tasks.
           </p>
         </div>
-        <Button type="button" variant="outline" aria-pressed={dark} onClick={toggleTheme}>
-          Dark mode
-        </Button>
       </header>
 
       <Card>
@@ -83,6 +56,6 @@ export function App() {
           </div>
         </CardContent>
       </Card>
-    </main>
+    </div>
   )
 }
