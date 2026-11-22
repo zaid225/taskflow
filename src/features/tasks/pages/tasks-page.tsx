@@ -1,6 +1,6 @@
 import { Plus } from 'lucide-react'
 import { useEffect, useState } from 'react'
-import { Link } from 'react-router'
+import { useSearchParams } from 'react-router'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { taskPriorities, taskStatuses, type TaskQuery } from '../../../../shared/schemas/tasks'
@@ -9,6 +9,7 @@ import { TaskDialogs } from '../components/task-dialogs'
 import { useTaskDialogs } from '../components/task-dialog-state'
 import { TaskEmpty, TaskError, TaskLoading } from '../components/task-feedback'
 import { TaskField, TaskSelect } from '../components/task-fields'
+import { TaskViewSwitcher } from '../components/task-view-switcher'
 import { TaskTable } from '../components/task-table'
 import { TaskList } from '../components/task-list'
 import { statusLabels } from '../data/task-order'
@@ -20,10 +21,13 @@ const sorts: Record<TaskQuery['sort'], string> = {
 }
 
 export function TasksPage() {
-  const [view, setView] = useState<'list' | 'table'>(() => {
+  const [params] = useSearchParams()
+  const requested = params.get('view')
+  const [preferredView] = useState<'list' | 'table'>(() => {
     try { return localStorage.getItem('taskflow-task-view') === 'table' ? 'table' : 'list' }
     catch { return 'list' }
   })
+  const view = requested === 'list' || requested === 'table' ? requested : preferredView
   const [search, setSearch] = useState('')
   const [filters, setFilters] = useState<TaskQuery>(defaults)
   const { dialog, setDialog } = useTaskDialogs()
@@ -37,10 +41,10 @@ export function TasksPage() {
     return () => window.clearTimeout(timer)
   }, [search])
 
-  function selectView(next: 'list' | 'table') {
-    setView(next)
-    try { localStorage.setItem('taskflow-task-view', next) } catch { /* Storage is optional. */ }
-  }
+  useEffect(() => {
+    if (requested !== 'list' && requested !== 'table') return
+    try { localStorage.setItem('taskflow-task-view', requested) } catch { /* Storage is optional. */ }
+  }, [requested])
 
   function clearFilters() {
     setSearch('')
@@ -56,11 +60,7 @@ export function TasksPage() {
         </div>
         <Button type="button" onClick={() => setDialog({ type: 'create' })}><Plus /> New task</Button>
       </div>
-      <div role="group" aria-label="Task view" className="flex w-fit gap-1 rounded-lg border bg-card p-1">
-        <Button type="button" variant={view === 'list' ? 'secondary' : 'ghost'} aria-pressed={view === 'list'} onClick={() => selectView('list')}>List</Button>
-        <Button type="button" variant={view === 'table' ? 'secondary' : 'ghost'} aria-pressed={view === 'table'} onClick={() => selectView('table')}>Table</Button>
-        <Button asChild variant="ghost"><Link to="/board">Board</Link></Button>
-      </div>
+      <TaskViewSwitcher view={view} />
       <div className="grid grid-cols-2 gap-3 rounded-xl border bg-card p-4 md:grid-cols-3 xl:grid-cols-[2fr_repeat(4,minmax(0,1fr))_auto] xl:items-end">
         <div className="col-span-2 md:col-span-1">
           <TaskField label="Search tasks">{(id) => (

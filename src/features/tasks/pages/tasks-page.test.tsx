@@ -1,9 +1,10 @@
 // @vitest-environment jsdom
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query'
 import { cleanup, fireEvent, render, screen, waitFor, within } from '@testing-library/react'
-import { MemoryRouter } from 'react-router'
+import { MemoryRouter, Route, Routes } from 'react-router'
 import { afterEach, expect, it, vi } from 'vitest'
 import type { Task } from '../../../../shared/schemas/tasks'
+import { BoardPage } from './board-page'
 import { TasksPage } from './tasks-page'
 
 vi.mock('@clerk/react', () => ({ useAuth: () => ({ getToken: async () => 'test-session' }) }))
@@ -24,7 +25,7 @@ afterEach(() => {
   vi.clearAllMocks()
 })
 
-function mount(initial: Task[] = [], failCreate = false, failDelete?: string) {
+function mount(initial: Task[] = [], failCreate = false, failDelete?: string, initialPath = '/tasks') {
   let rows = [...initial]
   const fetchMock = vi.fn(async (path: string, options: RequestInit) => {
     expect(new Headers(options.headers).get('Authorization')).toBe('Bearer test-session')
@@ -54,7 +55,7 @@ function mount(initial: Task[] = [], failCreate = false, failDelete?: string) {
   })
   vi.stubGlobal('fetch', fetchMock)
   const query = new QueryClient({ defaultOptions: { queries: { retry: false } } })
-  render(<QueryClientProvider client={query}><MemoryRouter><TasksPage /></MemoryRouter></QueryClientProvider>)
+  render(<QueryClientProvider client={query}><MemoryRouter initialEntries={[initialPath]}><Routes><Route path="/tasks" element={<TasksPage />} /><Route path="/board" element={<BoardPage />} /></Routes></MemoryRouter></QueryClientProvider>)
   return fetchMock
 }
 
@@ -132,7 +133,7 @@ it('remembers table view and requires confirmation before deleting selected task
   const failed = { ...original, id: '6ecb86a5-9bc7-41f8-a3a7-e9c588062fab', title: 'Review the release' }
   const untouched = { ...original, id: '6ecb86a5-9bc7-41f8-a3a7-e9c588062fac', title: 'Keep this task' }
   const fetchMock = mount([original, failed, untouched], false, failed.id)
-  fireEvent.click(screen.getByRole('button', { name: 'Table' }))
+  fireEvent.click(screen.getByRole('link', { name: 'Table' }))
   expect(localStorage.getItem('taskflow-task-view')).toBe('table')
   expect(screen.getByRole('link', { name: 'Board' }).getAttribute('href')).toBe('/board')
   await screen.findByRole('table')
@@ -153,4 +154,17 @@ it('remembers table view and requires confirmation before deleting selected task
   expect(screen.queryByRole('button', { name: original.title })).toBeNull()
   expect(screen.getByRole('button', { name: untouched.title })).toBeTruthy()
   expect((screen.getByRole('checkbox', { name: 'Select ' + failed.title }) as HTMLInputElement).checked).toBe(true)
+})
+
+
+it('opens Table directly from Board and keeps the three view links available', async () => {
+  mount([original], false, undefined, '/board')
+  const navigation = within(screen.getByRole('navigation', { name: 'Task view' }))
+  expect(navigation.getByRole('link', { name: 'Board' }).getAttribute('aria-current')).toBe('page')
+  fireEvent.click(navigation.getByRole('link', { name: 'Table' }))
+  await screen.findByRole('table')
+  expect(screen.getByRole('link', { name: 'Table' }).getAttribute('aria-current')).toBe('page')
+  fireEvent.click(screen.getByRole('link', { name: 'List' }))
+  expect(screen.queryByRole('table')).toBeNull()
+  expect(screen.getByRole('link', { name: 'List' }).getAttribute('aria-current')).toBe('page')
 })

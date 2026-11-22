@@ -3,6 +3,7 @@ import { useRef } from 'react'
 import { Button } from '@/components/ui/button'
 import type { ReorderTask } from '../../../../shared/schemas/tasks'
 import { boardQuery, useTaskList, useTaskMutation, useTaskMutationPending } from '../api/task-queries'
+import { TaskViewSwitcher } from '../components/task-view-switcher'
 import { TaskBoard } from '../components/task-board'
 import { TaskDialogs } from '../components/task-dialogs'
 import { useTaskDialogs } from '../components/task-dialog-state'
@@ -30,6 +31,7 @@ export function BoardPage() {
         </div>
         <Button type="button" onClick={() => setDialog({ type: 'create' })}><Plus /> New task</Button>
       </div>
+      <TaskViewSwitcher view="board" />
       {tasks.isPending && <TaskLoading label="Loading board" />}
       {tasks.isError && <TaskError error={tasks.error} retry={() => void tasks.refetch()} />}
       {tasks.data && <TaskBoard tasks={tasks.data} busy={busy} onMove={move}
