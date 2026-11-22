@@ -29,4 +29,4 @@ After approval, run `npm run build` followed by `npx --no-install wrangler deplo
 
 The custom UI supports email-code verification. Other Clerk verification factors and unsupported session tasks show recovery guidance. A hosted assessment preview using Clerk development keys has Clerk’s development-instance restrictions.
 
-The [live assessment preview](https://taskflow.zaidansari2249.workers.dev) passed public route, health, and signed-out API checks. Signed-in persistence through the hosted Worker still needs verification. Source code is available in the [TaskFlow GitHub repository](https://github.com/zaid225/taskflow). See the [assessment submission draft](docs/assessment-submission.md).
+The [live assessment preview](https://taskflow.zaidansari2249.workers.dev) passed public route, health, and signed-out API checks. A real Clerk session verified hosted task and profile persistence. Source code is available in the [TaskFlow GitHub repository](https://github.com/zaid225/taskflow). See the [assessment submission draft](docs/assessment-submission.md).

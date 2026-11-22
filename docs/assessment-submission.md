@@ -8,7 +8,7 @@
 
 ## Release verification
 
-Cloudflare serves the SPA and Hono API from one Worker and connects to Supabase through a cache-disabled Hyperdrive binding with verified TLS. The preview uses the Clerk development instance. Public routes, API health, and signed-out API rejection passed. Signed-in task and profile persistence through the hosted Worker remain unverified.
+Cloudflare serves the SPA and Hono API from one Worker and connects to Supabase through a cache-disabled Hyperdrive binding with verified TLS. The preview uses the Clerk development instance. Public routes, API health, and signed-out API rejection passed. A real Clerk session verified task creation, refresh persistence, editing, completion, a Kanban move through the card menu, bulk deletion, and profile display-name persistence with immediate header synchronization. Live OAuth photo handling and photo upload/removal still need a separate check.
 
 ## Three engineering decisions
 
@@ -41,4 +41,4 @@ The custom authentication UI supports email-code verification. Some configured C
 - **40–70s** Explain same-origin deployment, transaction-scoped ownership, and atomic board ordering.
 - **70–90s** Name the three exclusions and explain the additional Clerk factor you would support with another day.
 
-Record the demo after checking signed-in persistence on the preview URL.
+Use the verified preview URL for the on-camera recording.
