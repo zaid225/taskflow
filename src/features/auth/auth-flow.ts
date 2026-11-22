@@ -1,6 +1,6 @@
 import { useNavigate, useSearchParams } from 'react-router'
 
-const destinations = new Set(['/dashboard', '/tasks', '/board', '/profile'])
+const destinations = new Set(['/dashboard', '/tasks', '/board', '/profile', '/calendar'])
 
 export function safeDestination(value: string | null) {
   if (!value?.startsWith('/') || value.startsWith('//')) return '/dashboard'

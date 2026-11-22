@@ -5,6 +5,7 @@ const views = [
   { id: 'list', label: 'List', to: '/tasks?view=list' },
   { id: 'table', label: 'Table', to: '/tasks?view=table' },
   { id: 'board', label: 'Board', to: '/board' },
+  { id: 'calendar', label: 'Calendar', to: '/calendar' },
 ] as const
 
 export function TaskViewSwitcher({ view }: { view: (typeof views)[number]['id'] }) {

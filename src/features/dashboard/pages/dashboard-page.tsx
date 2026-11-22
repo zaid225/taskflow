@@ -7,6 +7,7 @@ import { useTaskList, useTaskStats } from '@/features/tasks/api/task-queries'
 import { TaskDialogs } from '@/features/tasks/components/task-dialogs'
 import { useTaskDialogs } from '@/features/tasks/components/task-dialog-state'
 import { TaskEmpty, TaskError, TaskLoading } from '@/features/tasks/components/task-feedback'
+import { TaskAnalyticsPanel } from './task-analytics-panel'
 import { TaskList } from '@/features/tasks/components/task-list'
 
 const metrics = [
@@ -48,6 +49,7 @@ export function DashboardPage() {
           ))}
         </section>
       )}
+      {recent.data && !recent.isError && <TaskAnalyticsPanel tasks={recent.data} onOpen={id => setDialog({ type: 'details', id })} />}
       <section aria-labelledby="recent-tasks-heading" className="space-y-3">
         <div className="flex flex-wrap items-center justify-between gap-2">
           <h2 id="recent-tasks-heading" className="text-lg font-semibold">Recent tasks</h2>

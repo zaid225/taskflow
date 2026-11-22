@@ -1,3 +1,4 @@
+import { useAuth } from '@clerk/react'
 import { Plus } from 'lucide-react'
 import { useEffect, useState } from 'react'
 import { useSearchParams } from 'react-router'
@@ -9,6 +10,7 @@ import { TaskDialogs } from '../components/task-dialogs'
 import { useTaskDialogs } from '../components/task-dialog-state'
 import { TaskEmpty, TaskError, TaskLoading } from '../components/task-feedback'
 import { TaskField, TaskSelect } from '../components/task-fields'
+import { TaskFilterTools } from '../components/task-filter-tools'
 import { TaskViewSwitcher } from '../components/task-view-switcher'
 import { TaskTable } from '../components/task-table'
 import { TaskList } from '../components/task-list'
@@ -21,6 +23,7 @@ const sorts: Record<TaskQuery['sort'], string> = {
 }
 
 export function TasksPage() {
+  const { userId } = useAuth()
   const [params] = useSearchParams()
   const requested = params.get('view')
   const [preferredView] = useState<'list' | 'table'>(() => {
@@ -96,6 +99,9 @@ export function TasksPage() {
           onClick={clearFilters}>Clear filters</Button>
       </div>
 
+      {userId && <TaskFilterTools key={userId} userId={userId} filters={{ ...filters, search: search.trim() || undefined }}
+        onRestore={saved => { setSearch(saved.search ?? ''); setFilters(saved) }}
+        tasks={!tasks.isError && (search.trim() || undefined) === filters.search ? tasks.data : undefined} />}
       {tasks.isPending ? <TaskLoading /> : tasks.isError ? <TaskError error={tasks.error} retry={() => void tasks.refetch()} />
         : tasks.data.length ? (view === 'table'
           ? <TaskTable key={JSON.stringify(filters)} tasks={tasks.data} onAction={setDialog} />
