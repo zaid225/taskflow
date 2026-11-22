@@ -44,7 +44,7 @@ export function AppRoutes({ configured }: { configured: boolean }) {
         </Route>
       </Route>
       <Route element={<AppShell />}>
-        <Route path="design-system" element={<DesignSystemPage />} />
+        {import.meta.env.DEV && <Route path="design-system" element={<DesignSystemPage />} />}
         <Route path="*" element={<NotFoundPage />} />
       </Route>
     </Routes>

@@ -9,7 +9,7 @@ function Unavailable({ configured }: { configured: boolean }) {
     <AuthLayout title="Authentication unavailable" description={configured
       ? 'Clerk could not connect. Check your connection and reload to try again.'
       : 'Set VITE_CLERK_PUBLISHABLE_KEY in the local environment and restart the app.'}>
-      <Button asChild variant="outline"><Link to="/design-system">Open design system</Link></Button>
+      {import.meta.env.DEV && <Button asChild variant="outline"><Link to="/design-system">Open design system</Link></Button>}
     </AuthLayout>
   )
 }

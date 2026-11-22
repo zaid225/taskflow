@@ -3,7 +3,7 @@
 | Deliverable | Status |
 | --- | --- |
 | Working application URL | [Cloudflare assessment preview](https://taskflow.zaidansari2249.workers.dev) |
-| Source repository URL | Pending GitHub destination and authorization |
+| Source repository URL | [GitHub repository](https://github.com/zaid225/taskflow) |
 | On-camera video | Script ready below |
 
 ## Release verification
@@ -36,9 +36,9 @@ The custom authentication UI supports email-code verification. Some configured C
 
 ### Recording checklist
 
-- Sign in and show the dashboard on the preview URL.
-- Create, move, and refresh a task to show persistence.
-- Explain the three engineering decisions and the three exclusions.
-- Close with the current authentication limitation and the next improvement.
+- **0–15s** Open the hosted preview, sign in, and show the dashboard.
+- **15–40s** Create a task, move it on the board, and refresh to demonstrate persistence.
+- **40–70s** Explain same-origin deployment, transaction-scoped ownership, and atomic board ordering.
+- **70–90s** Name the three exclusions and explain the additional Clerk factor you would support with another day.
 
 Record the demo after checking signed-in persistence on the preview URL.

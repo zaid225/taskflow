@@ -1,5 +1,6 @@
+import { profileSchema, updateProfileSchema } from '../shared/schemas/profile'
 import { drizzle } from 'drizzle-orm/node-postgres'
-import type { ApiError, ApiSuccess, Task, TaskStats } from '../shared/schemas/tasks'
+import { createTaskSchema, taskQuerySchema, type ApiError, type ApiSuccess, type Task, type TaskStats } from '../shared/schemas/tasks'
 import type { Client } from 'pg'
 import { describe, expect, it, vi } from 'vitest'
 import { createApp } from './app'
@@ -380,7 +381,7 @@ describe('Profile ownership and validation', () => {
     expect(unverified.query).not.toHaveBeenCalled()
 
     const { app, query } = setup()
-    for (const body of [{}, { displayName: '   ' }, { displayName: 'x'.repeat(81) }, { displayName: 23 }]) {
+    for (const body of [{}, { displayName: '   ' }, { displayName: ' X ' }, { displayName: 'x'.repeat(81) }, { displayName: 23 }]) {
       expect((await app.request(path, json('PUT', body))).status).toBe(400)
     }
     expect(query).not.toHaveBeenCalled()
@@ -399,4 +400,22 @@ describe('Profile ownership and validation', () => {
     expect(await tasks.json()).toEqual({ data: [] })
     complete()
   })
+})
+
+
+it('applies the ordinary field limits without rejecting legacy profiles or empty descriptions', async () => {
+  expect(createTaskSchema.parse({ title: ' Fix ', description: '' })).toEqual({ title: 'Fix', description: '' })
+  expect(createTaskSchema.safeParse({ title: 'Fix' }).success).toBe(true)
+  expect(taskQuerySchema.parse({ search: ' x ' }).search).toBe('x')
+  expect(updateProfileSchema.parse({ displayName: ' Jo ' })).toEqual({ displayName: 'Jo' })
+  expect(updateProfileSchema.safeParse({ displayName: null }).success).toBe(true)
+  expect(profileSchema.parse({ displayName: 'J' })).toEqual({ displayName: 'J' })
+
+  const { app, query } = setup()
+  const response = await app.request('/api/v1/tasks', json('POST', { title: ' Ab ' }))
+  expect(response.status).toBe(400)
+  expect((await readResponse<ApiError>(response)).error.issues).toContainEqual({
+    field: 'title', message: 'Enter at least 3 characters.',
+  })
+  expect(query).not.toHaveBeenCalled()
 })

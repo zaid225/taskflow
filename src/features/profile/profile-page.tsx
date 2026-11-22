@@ -1,4 +1,6 @@
 import { useUser } from '@clerk/react'
+import { useState } from 'react'
+import { updateProfileSchema } from '../../../shared/schemas/profile'
 import { toast } from 'sonner'
 import { Button } from '@/components/ui/button'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
@@ -10,6 +12,7 @@ export function ProfilePage() {
   const { user } = useUser()
   const profile = useProfile()
   const save = useSaveProfile()
+  const [nameError, setNameError] = useState<string>()
 
   return (
     <section className="mx-auto max-w-xl space-y-6" aria-labelledby="profile-heading">
@@ -43,14 +46,23 @@ export function ProfilePage() {
             <form key={profile.data.displayName ?? ''} className="space-y-4" onSubmit={(event) => {
               event.preventDefault()
               const name = new FormData(event.currentTarget).get('displayName')
-              save.mutate({ displayName: typeof name === 'string' ? name.trim() || null : null }, {
+              const result = updateProfileSchema.safeParse({ displayName: typeof name === 'string' ? name.trim() || null : null })
+              if (!result.success) {
+                setNameError(result.error.issues[0]?.message)
+                return
+              }
+              setNameError(undefined)
+              save.mutate(result.data, {
                 onSuccess: () => toast.success('Profile saved.'),
               })
             }}>
               <div className="space-y-2">
                 <Label htmlFor="display-name">Display name</Label>
                 <Input id="display-name" name="displayName" autoComplete="nickname" maxLength={80}
-                  placeholder="Enter a display name" defaultValue={profile.data.displayName ?? ''} disabled={save.isPending} />
+                  placeholder="Enter a display name" defaultValue={profile.data.displayName ?? ''} disabled={save.isPending}
+                  aria-invalid={Boolean(nameError)} aria-describedby={nameError ? 'display-name-error' : undefined}
+                  onChange={() => setNameError(undefined)} />
+                {nameError && <p id="display-name-error" role="alert" className="text-sm text-destructive">{nameError}</p>}
               </div>
               {save.isError && <p role="alert" className="text-sm text-destructive">{save.error.message}</p>}
               <Button type="submit" disabled={save.isPending}>{save.isPending ? 'Saving…' : 'Save profile'}</Button>

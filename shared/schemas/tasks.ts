@@ -8,7 +8,7 @@ export const taskStatusSchema = z.enum(taskStatuses)
 export const taskPrioritySchema = z.enum(taskPriorities)
 
 const taskFields = z.strictObject({
-  title: z.string().trim().min(1).max(160),
+  title: z.string().trim().min(3, 'Enter at least 3 characters.').max(160),
   description: z.string().max(10_000).nullable(),
   status: taskStatusSchema,
   priority: taskPrioritySchema,

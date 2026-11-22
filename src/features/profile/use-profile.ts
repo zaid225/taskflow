@@ -1,6 +1,6 @@
 import { useAuth } from '@clerk/react'
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
-import { updateProfileSchema, type Profile } from '../../../shared/schemas/profile'
+import { profileSchema, updateProfileSchema, type Profile } from '../../../shared/schemas/profile'
 
 const profileKey = ['profile'] as const
 
@@ -14,7 +14,7 @@ async function requestProfile(getToken: () => Promise<string | null>, options: R
   if (response.status === 503) throw new Error('Profile storage is temporarily unavailable.')
   if (!response.ok) throw new Error('TaskFlow could not access your profile. Try again.')
   const payload = await response.json()
-  return updateProfileSchema.parse(payload?.data)
+  return profileSchema.parse(payload?.data)
 }
 
 export function useProfile() {
