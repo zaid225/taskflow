@@ -46,13 +46,13 @@ Before a live CRUD test, point the root `.dev.vars` beside `wrangler.jsonc` at t
 
 ## Production Hyperdrive
 
-After infrastructure approval, create a Hyperdrive configuration with the restricted Supabase runtime role. Use the Supabase direct endpoint where supported, disable query caching, and set server TLS verification to `verify-full` with the Supabase CA. Use the dashboard or a credential-safe API input for the connection details. Add the real configuration ID to `wrangler.jsonc`:
+For a new Cloudflare environment, create a Hyperdrive configuration after infrastructure approval with the restricted Supabase runtime role. Use the Supabase direct endpoint where supported, disable query caching, and set server TLS verification to `verify-full` with the Supabase CA. Use the dashboard or a credential-safe API input for the connection details. Add the real configuration ID to `wrangler.jsonc`:
 
 ```jsonc
-"hyperdrive": [{ "binding": "HYPERDRIVE", "id": "<real-configuration-id>" }]
+"hyperdrive": [{ "binding": "HYPERDRIVE", "id": "<configuration-id>" }]
 ```
 
-Build with `npm run build` and deploy the generated Vite Worker and assets with `npx --no-install wrangler deploy` after approval. Set `CLERK_SECRET_KEY` as a Worker secret and set `CLERK_PUBLISHABLE_KEY` and `CLERK_AUTHORIZED_PARTIES` for the deployed Clerk instance and exact SPA origin. Leave `APP_ENV=development` and `DATABASE_URL` in local configuration. Deploy only after approval. The production Hyperdrive connection remains unverified.
+Build with `npm run build` and deploy the generated Vite Worker and assets with `npx --no-install wrangler deploy` after approval. Set `CLERK_SECRET_KEY` as a Worker secret and set `CLERK_PUBLISHABLE_KEY` and `CLERK_AUTHORIZED_PARTIES` for the deployed Clerk instance and exact SPA origin. Leave `APP_ENV=development` and `DATABASE_URL` in local configuration. Deploy only after approval. The [hosted assessment preview](https://taskflow.zaidansari2249.workers.dev) uses the provisioned Hyperdrive binding and the Clerk development instance. Hosted signed-in database requests still need end-to-end verification.
 
 ## REST API
 

@@ -2,9 +2,13 @@
 
 | Deliverable | Status |
 | --- | --- |
-| Working application URL | Pending Cloudflare deployment and public verification |
-| Source repository URL | Pending GitHub destination and push approval |
+| Working application URL | [Cloudflare assessment preview](https://taskflow.zaidansari2249.workers.dev) |
+| Source repository URL | Pending GitHub destination and authorization |
 | On-camera video | Script ready below |
+
+## Release verification
+
+Cloudflare serves the SPA and Hono API from one Worker and connects to Supabase through a cache-disabled Hyperdrive binding with verified TLS. The preview uses the Clerk development instance. Public routes, API health, and signed-out API rejection passed. Signed-in task and profile persistence through the hosted Worker remain unverified.
 
 ## Three engineering decisions
 
@@ -30,4 +34,11 @@ The custom authentication UI supports email-code verification. Some configured C
 
 “I left out team sharing, reminders, and offline editing to focus on individual ownership and consistent task data. With another day, I would add a custom flow for another Clerk verification factor and test recovery.”
 
-Record the demo after checking signed-in persistence on the submitted URL.
+### Recording checklist
+
+- Sign in and show the dashboard on the preview URL.
+- Create, move, and refresh a task to show persistence.
+- Explain the three engineering decisions and the three exclusions.
+- Close with the current authentication limitation and the next improvement.
+
+Record the demo after checking signed-in persistence on the preview URL.

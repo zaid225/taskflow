@@ -1,6 +1,9 @@
 import assert from 'node:assert/strict'
+import { randomUUID } from 'node:crypto'
 import { preview } from 'vite'
 
+// These requests must finish before opening a database connection.
+process.env.CLOUDFLARE_HYPERDRIVE_LOCAL_CONNECTION_STRING_HYPERDRIVE = `postgres://smoke:${randomUUID()}@127.0.0.1:1/taskflow_smoke`
 const host = '127.0.0.1'
 const server = await preview({ preview: { host, port: 4187, strictPort: true } })
 const origin = `http://${host}:4187`

@@ -29,4 +29,4 @@ After approval, run `npm run build` followed by `npx --no-install wrangler deplo
 
 The custom UI supports email-code verification. Other Clerk verification factors and unsupported session tasks show recovery guidance. A hosted assessment preview using Clerk development keys has Clerk’s development-instance restrictions.
 
-Live application URL and GitHub repository URL are pending release verification. See the [assessment submission draft](docs/assessment-submission.md).
+The [live assessment preview](https://taskflow.zaidansari2249.workers.dev) passed public route, health, and signed-out API checks. Signed-in persistence through the hosted Worker still needs verification. GitHub submission is pending. See the [assessment submission draft](docs/assessment-submission.md).
