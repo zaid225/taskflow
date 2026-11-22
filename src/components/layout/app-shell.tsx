@@ -6,11 +6,11 @@ import { TooltipProvider } from '@/components/ui/tooltip'
 import { AppHeader } from './app-header'
 import { AppSidebar } from './app-sidebar'
 
-export function AppShell() {
+export function AppShell({ authenticated = false }: { authenticated?: boolean }) {
   const { pathname } = useLocation()
   const sidebarTrigger = useRef<HTMLButtonElement>(null)
   const title = navigation.find(({ to }) => matchPath(to, pathname))?.title
-    ?? (pathname === '/' ? 'Overview' : 'Page not found')
+    ?? (pathname === '/' ? 'Overview' : pathname === '/profile' ? 'Profile' : 'Page not found')
 
   useEffect(() => {
     document.title = `${title} | TaskFlow`
@@ -24,7 +24,7 @@ export function AppShell() {
         </a>
         <AppSidebar onMobileClose={() => sidebarTrigger.current?.focus()} />
         <SidebarInset id="workspace" tabIndex={-1} className="min-w-0">
-          <AppHeader title={title} sidebarTrigger={sidebarTrigger} />
+          <AppHeader title={title} sidebarTrigger={sidebarTrigger} authenticated={authenticated} />
           <div className="mx-auto w-full max-w-7xl px-4 py-6 sm:px-6 lg:px-8 lg:py-8">
             <Outlet />
           </div>

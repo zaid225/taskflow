@@ -1,46 +1,41 @@
-import { Card, CardContent } from '@/components/ui/card'
-import { PriorityBadge } from '../components/task-badges'
-import { formatDueDate, previewTasks, taskStatuses } from '../data/preview-tasks'
+import { Plus } from 'lucide-react'
+import { useRef } from 'react'
+import { Button } from '@/components/ui/button'
+import type { ReorderTask } from '../../../../shared/schemas/tasks'
+import { boardQuery, useTaskList, useTaskMutation, useTaskMutationPending } from '../api/task-queries'
+import { TaskBoard } from '../components/task-board'
+import { TaskDialogs } from '../components/task-dialogs'
+import { useTaskDialogs } from '../components/task-dialog-state'
+import { TaskError, TaskLoading } from '../components/task-feedback'
 
 export function BoardPage() {
+  const tasks = useTaskList(boardQuery)
+  const mutation = useTaskMutation()
+  const busy = useTaskMutationPending()
+  const lock = useRef(false)
+  const { dialog, setDialog } = useTaskDialogs()
+
+  function move(operation: ReorderTask) {
+    if (lock.current || busy) return
+    lock.current = true
+    void mutation.mutateAsync({ type: 'reorder', move: operation }).catch(() => {}).finally(() => { lock.current = false })
+  }
+
   return (
     <div className="space-y-6">
-      <div className="space-y-2">
-        <h1 className="text-3xl font-semibold tracking-tight">Board</h1>
-        <p className="text-muted-foreground">Demonstration tasks grouped by status.</p>
+      <div className="flex flex-wrap items-start justify-between gap-4">
+        <div className="space-y-2">
+          <h1 className="text-3xl font-semibold tracking-tight">Board</h1>
+          <p className="text-muted-foreground">Drag tasks between columns or use each task’s Move menu.</p>
+        </div>
+        <Button type="button" onClick={() => setDialog({ type: 'create' })}><Plus /> New task</Button>
       </div>
-      <div className="grid items-start gap-4 lg:grid-cols-3">
-        {taskStatuses.map((status, index) => {
-          const tasks = previewTasks.filter((task) => task.status === status)
-          const headingId = `board-column-${index}`
-
-          return (
-            <section key={status} aria-labelledby={headingId} className="min-w-0 space-y-4 rounded-xl border bg-muted p-4">
-              <div className="flex items-center justify-between gap-2">
-                <h2 id={headingId} className="font-semibold">{status}</h2>
-                <span className="text-sm tabular-nums text-muted-foreground">{tasks.length}</span>
-              </div>
-              <ul className="space-y-3">
-                {tasks.map((task) => (
-                  <li key={task.id}>
-                    <Card className="gap-0 py-3">
-                      <CardContent className="space-y-3">
-                        <h3 className="font-medium wrap-break-word">{task.title}</h3>
-                        <div className="flex flex-wrap items-center gap-2">
-                          <PriorityBadge priority={task.priority} />
-                          <span className="text-xs text-muted-foreground">
-                            Due <time dateTime={task.dueDate}>{formatDueDate(task.dueDate)}</time>
-                          </span>
-                        </div>
-                      </CardContent>
-                    </Card>
-                  </li>
-                ))}
-              </ul>
-            </section>
-          )
-        })}
-      </div>
+      {tasks.isPending && <TaskLoading label="Loading board" />}
+      {tasks.isError && <TaskError error={tasks.error} retry={() => void tasks.refetch()} />}
+      {tasks.data && <TaskBoard tasks={tasks.data} busy={busy} onMove={move}
+          onDetails={(id) => setDialog({ type: 'details', id })}
+          onCreate={(status) => setDialog({ type: 'create', status })} />}
+      <TaskDialogs dialog={dialog} onChange={setDialog} />
     </div>
   )
 }

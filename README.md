@@ -1,75 +1,32 @@
 # TaskFlow
 
-Run `npm run dev` to open the TaskFlow dashboard. Overview, My Tasks, and Board share a static demonstration dataset. The component preview is available at `/design-system`. It uses Tailwind CSS v4, shadcn/ui, and the customized tweakcn Modern Minimal theme. Global styles are in `src/styles/globals.css`, and generated components are in `src/components/ui`. The Dark mode button switches appearance and saves the preference in the current browser.
+TaskFlow is a responsive task manager with a dashboard, a searchable task list, and a Kanban board. It supports task creation, editing, completion, deletion, due dates, priority and status filters, and persistent board ordering. Accounts can save a TaskFlow display name.
 
-Currently, two official plugins are available:
+## Stack and architecture
 
-- [@vitejs/plugin-react](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react) uses [Oxc](https://oxc.rs)
-- [@vitejs/plugin-react-swc](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react-swc) uses [SWC](https://swc.rs/)
+React, TypeScript, Vite, React Router, Tailwind CSS, shadcn/ui, and TanStack Query power the frontend. Custom Clerk screens support email/password, signup verification, password recovery, and Google sign-in. One Cloudflare Worker serves the SPA and the same-origin Hono API. Drizzle and node-postgres connect to Supabase PostgreSQL. Hosted database access uses a Hyperdrive binding. The API verifies Clerk sessions and PostgreSQL row-level security scopes records to the verified user.
 
-## React Compiler
+## Local setup
 
-The React Compiler is not enabled on this template because of its impact on dev & build performances. To add it, see [this documentation](https://react.dev/learn/react-compiler/installation).
+1. Run `npm ci`.
+2. Copy `.env.example` to `.env.local` and set `VITE_CLERK_PUBLISHABLE_KEY` for the Clerk development instance.
+3. Copy `.dev.vars.example` to `.dev.vars`. Set `APP_ENV`, `CLERK_PUBLISHABLE_KEY`, `CLERK_SECRET_KEY`, `CLERK_AUTHORIZED_PARTIES`, and `DATABASE_URL`. Use the restricted runtime login and verified TLS. Place the Supabase CA at `prod-ca-2021.crt` or set `NODE_EXTRA_CA_CERTS`.
+4. Run `npm run dev` and open [localhost:8787](http://localhost:8787).
 
-## Expanding the ESLint configuration
+Set `MIGRATION_DATABASE_URL` in the ignored `.env` for the migration administrator. Verify the target database before applying migrations. The [backend setup](docs/backend.md) documents the migration command and restricted runtime-role provisioning.
 
-If you are developing a production application, we recommend updating the configuration to enable type-aware lint rules:
+## Tests
 
-```js
-export default defineConfig([
-  globalIgnores(['dist']),
-  {
-    files: ['**/*.{ts,tsx}'],
-    extends: [
-      // Other configs...
+Run `npm test`, `npm run lint`, `npm run typecheck`, and `npm run build`. After building, run `npm run test:worker` for a local Workerd smoke test of SPA routes, API health, and signed-out request handling. The automated tests use mocked Clerk or database dependencies where applicable. Verify authenticated workflows with a real Clerk session.
 
-      // Remove tseslint.configs.recommended and replace with this
-      tseslint.configs.recommendedTypeChecked,
-      // Alternatively, use this for stricter rules
-      tseslint.configs.strictTypeChecked,
-      // Optionally, add this for stylistic rules
-      tseslint.configs.stylisticTypeChecked,
+## Deployment
 
-      // Other configs...
-    ],
-    languageOptions: {
-      parserOptions: {
-        project: ['./tsconfig.node.json', './tsconfig.app.json'],
-        tsconfigRootDir: import.meta.dirname,
-      },
-      // other options...
-    },
-  },
-])
+Configure a cache-disabled `HYPERDRIVE` binding with the restricted PostgreSQL login, Supabase CA, and hostname verification. Provide `VITE_CLERK_PUBLISHABLE_KEY` at build time and the matching Worker `CLERK_PUBLISHABLE_KEY` and `CLERK_SECRET_KEY` at runtime. Set `CLERK_AUTHORIZED_PARTIES` to the exact hosted origin and verify the Google flow returns through `/sso-callback`.
 
-```
+After approval, run `npm run build` followed by `npx --no-install wrangler deploy`. Confirm the deployed SPA paths and API responses before publishing the URL. See [backend deployment setup](docs/backend.md) for additional details.
 
-You can also install [eslint-plugin-react-x](https://npmx.dev/package/eslint-plugin-react-x) and [eslint-plugin-react-dom](https://npmx.dev/package/eslint-plugin-react-dom) for React-specific lint rules:
+## Known limitations
 
-```js
-// eslint.config.js
-import reactX from 'eslint-plugin-react-x'
-import reactDom from 'eslint-plugin-react-dom'
+The custom UI supports email-code verification. Other Clerk verification factors and unsupported session tasks show recovery guidance. A hosted assessment preview using Clerk development keys has Clerk’s development-instance restrictions.
 
-export default defineConfig([
-  globalIgnores(['dist']),
-  {
-    files: ['**/*.{ts,tsx}'],
-    extends: [
-      // Other configs...
-      // Enable lint rules for React
-      reactX.configs['recommended-typescript'],
-      // Enable lint rules for React DOM
-      reactDom.configs.recommended,
-    ],
-    languageOptions: {
-      parserOptions: {
-        project: ['./tsconfig.node.json', './tsconfig.app.json'],
-        tsconfigRootDir: import.meta.dirname,
-      },
-      // other options...
-    },
-  },
-])
-
-```
+Live application URL and GitHub repository URL are pending release verification. See the [assessment submission draft](docs/assessment-submission.md).

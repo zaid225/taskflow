@@ -34,3 +34,9 @@ test-results/
 *.njsproj
 *.sln
 *.sw?
+
+# Generated Cloudflare runtime declarations
+worker-configuration.d.ts
+
+# Local Supabase TLS trust configuration
+prod-ca-2021.crt

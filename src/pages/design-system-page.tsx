@@ -29,7 +29,7 @@ export function DesignSystemPage() {
           <div className="grid gap-2">
             <Label htmlFor="sample-title">Task title</Label>
             <Input
-              className="border-muted-foreground focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-solid focus-visible:outline-foreground"
+              className="border-muted-foreground"
               id="sample-title"
               ref={titleInput}
               value={title}

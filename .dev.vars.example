@@ -1,0 +1,5 @@
+APP_ENV=development
+CLERK_PUBLISHABLE_KEY=pk_test_REPLACE_ME
+CLERK_SECRET_KEY=sk_test_REPLACE_ME
+CLERK_AUTHORIZED_PARTIES=http://localhost:8787,http://127.0.0.1:8787
+DATABASE_URL=postgresql://taskflow_runtime:REPLACE_ME@localhost:5432/taskflow?sslmode=verify-full
