@@ -6,6 +6,7 @@ import { Button } from '@/components/ui/button'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
+import { ProfilePhotoEditor } from './profile-photo-editor'
 import { useProfile, useSaveProfile } from './use-profile'
 
 export function ProfilePage() {
@@ -17,6 +18,7 @@ export function ProfilePage() {
   return (
     <section className="mx-auto max-w-xl space-y-6" aria-labelledby="profile-heading">
       <h1 id="profile-heading" className="text-2xl font-semibold">Profile</h1>
+      <ProfilePhotoEditor displayName={profile.data?.displayName} />
       <Card>
         <CardHeader>
           <CardTitle>Account</CardTitle>

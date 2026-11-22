@@ -80,3 +80,40 @@ export function useTaskMutation() {
 export function useTaskMutationPending() {
   return useIsMutating({ mutationKey: taskKeys.mutation }) > 0
 }
+
+export function useBulkDeleteTasks() {
+  const { getToken } = useAuth()
+  const client = useQueryClient()
+  return useMutation({
+    mutationKey: taskKeys.mutation,
+    mutationFn: async (ids: readonly string[]) => {
+      const token = await getToken()
+      const api = createTaskApi(async () => token)
+      const pending = [...new Set(ids)]
+      const deleted: string[] = []
+      const failed: string[] = []
+      async function removePending() {
+        for (let id = pending.shift(); id; id = pending.shift()) {
+          try {
+            await api.remove(id)
+            deleted.push(id)
+          } catch {
+            failed.push(id)
+          }
+        }
+      }
+      await Promise.all(Array.from({ length: Math.min(3, pending.length) }, removePending))
+      return { deleted, failed }
+    },
+    onSuccess: async ({ deleted, failed }) => {
+      for (const id of deleted) client.removeQueries({ queryKey: taskKeys.item(id), exact: true })
+      await client.invalidateQueries({ queryKey: root })
+      if (failed.length) {
+        toast.error(`Deleted ${deleted.length} of ${deleted.length + failed.length} tasks. ${failed.length} could not be deleted.`)
+      } else {
+        toast.success(`Deleted ${deleted.length} ${deleted.length === 1 ? 'task' : 'tasks'}.`)
+      }
+    },
+    onError: (error) => toast.error(taskErrorMessage(error)),
+  })
+}

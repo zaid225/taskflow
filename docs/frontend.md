@@ -12,3 +12,5 @@
 The task workspace uses a TanStack Query cache scoped to the current Clerk session. Requests obtain the Clerk session token and call the same-origin Hono API. Successful writes refresh the task lists, details and dashboard counts. A board move updates the cached order optimistically, restores the snapshot on failure, and uses the board returned by the Worker on success. No task data is stored in browser persistence.
 
 `npm test` includes frontend interaction and cache tests with mocked fetch responses. Live authenticated persistence requires the PostgreSQL schema, approved runtime role and RLS setup described in [backend setup](backend.md).
+
+The Tasks view remembers its List or Table preference. The table uses the same query and filters, and the Board link opens the existing Kanban page. Bulk deletion confirms the selected count, sends at most three concurrent authenticated requests, and keeps failed rows selected for retry. The custom account menu and photo editor use Clerk for images and the existing TaskFlow profile query for display names.

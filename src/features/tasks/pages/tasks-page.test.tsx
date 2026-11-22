@@ -1,6 +1,7 @@
 // @vitest-environment jsdom
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query'
 import { cleanup, fireEvent, render, screen, waitFor, within } from '@testing-library/react'
+import { MemoryRouter } from 'react-router'
 import { afterEach, expect, it, vi } from 'vitest'
 import type { Task } from '../../../../shared/schemas/tasks'
 import { TasksPage } from './tasks-page'
@@ -18,11 +19,12 @@ const original: Task = {
 
 afterEach(() => {
   cleanup()
+  localStorage.clear()
   vi.unstubAllGlobals()
   vi.clearAllMocks()
 })
 
-function mount(initial: Task[] = [], failCreate = false) {
+function mount(initial: Task[] = [], failCreate = false, failDelete?: string) {
   let rows = [...initial]
   const fetchMock = vi.fn(async (path: string, options: RequestInit) => {
     expect(new Headers(options.headers).get('Authorization')).toBe('Bearer test-session')
@@ -43,15 +45,16 @@ function mount(initial: Task[] = [], failCreate = false) {
       return Response.json({ data: result })
     }
     if (method === 'DELETE') {
-      expect(single).toBe(true)
-      rows = []
+      const target = path.split('/').at(-1)
+      if (target === failDelete) return Response.json({ error: { code: 'INTERNAL_ERROR' } }, { status: 500 })
+      rows = rows.filter((task) => task.id !== target)
       return new Response(null, { status: 204 })
     }
     return Response.json({ data: single ? rows[0] : rows })
   })
   vi.stubGlobal('fetch', fetchMock)
   const query = new QueryClient({ defaultOptions: { queries: { retry: false } } })
-  render(<QueryClientProvider client={query}><TasksPage /></QueryClientProvider>)
+  render(<QueryClientProvider client={query}><MemoryRouter><TasksPage /></MemoryRouter></QueryClientProvider>)
   return fetchMock
 }
 
@@ -122,4 +125,32 @@ it('sends search, status, priority and sort to the task list endpoint and clears
   fireEvent.click(screen.getByRole('button', { name: 'Clear filters' }))
   expect((screen.getByLabelText('Search tasks') as HTMLInputElement).value).toBe('')
   expect((screen.getByLabelText('Status') as HTMLSelectElement).value).toBe('')
+})
+
+
+it('remembers table view and requires confirmation before deleting selected tasks', async () => {
+  const failed = { ...original, id: '6ecb86a5-9bc7-41f8-a3a7-e9c588062fab', title: 'Review the release' }
+  const untouched = { ...original, id: '6ecb86a5-9bc7-41f8-a3a7-e9c588062fac', title: 'Keep this task' }
+  const fetchMock = mount([original, failed, untouched], false, failed.id)
+  fireEvent.click(screen.getByRole('button', { name: 'Table' }))
+  expect(localStorage.getItem('taskflow-task-view')).toBe('table')
+  expect(screen.getByRole('link', { name: 'Board' }).getAttribute('href')).toBe('/board')
+  await screen.findByRole('table')
+  fireEvent.click(screen.getByRole('checkbox', { name: 'Select all visible tasks' }))
+  expect(screen.getByText('3 selected')).toBeTruthy()
+  fireEvent.click(screen.getByRole('button', { name: 'Clear selection' }))
+  fireEvent.click(screen.getByRole('checkbox', { name: 'Select ' + original.title }))
+  fireEvent.click(screen.getByRole('checkbox', { name: 'Select ' + failed.title }))
+  fireEvent.click(screen.getByRole('button', { name: 'Delete selected' }))
+  const confirmation = within(await screen.findByRole('alertdialog', { name: 'Delete 2 tasks?' }))
+  expect(fetchMock.mock.calls.filter(([, options]) => options.method === 'DELETE')).toHaveLength(0)
+  fireEvent.click(confirmation.getByRole('button', { name: 'Delete tasks' }))
+  await waitFor(() => expect(toast.error).toHaveBeenCalledWith('Deleted 1 of 2 tasks. 1 could not be deleted.'))
+  expect(toast.success).not.toHaveBeenCalled()
+  expect(fetchMock.mock.calls.filter(([, options]) => options.method === 'DELETE').map(([path]) => path)).toEqual([
+    '/api/v1/tasks/' + original.id, '/api/v1/tasks/' + failed.id,
+  ])
+  expect(screen.queryByRole('button', { name: original.title })).toBeNull()
+  expect(screen.getByRole('button', { name: untouched.title })).toBeTruthy()
+  expect((screen.getByRole('checkbox', { name: 'Select ' + failed.title }) as HTMLInputElement).checked).toBe(true)
 })
