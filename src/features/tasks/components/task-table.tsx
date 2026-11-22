@@ -1,9 +1,11 @@
 import { useRef, useState } from 'react'
 import { AlertDialog } from 'radix-ui'
 import { Button } from '@/components/ui/button'
-import type { Task } from '../../../../shared/schemas/tasks'
-import { useBulkDeleteTasks } from '../api/task-queries'
+import { taskPriorities, taskStatuses, type Task } from '../../../../shared/schemas/tasks'
+import { useBulkTaskMutation, type BulkTaskAction } from '../api/task-queries'
 import { PriorityBadge, StatusBadge, TaskDueDate } from './task-badges'
+import { statusLabels } from '../data/task-order'
+import { TaskSelect } from './task-fields'
 import type { TaskDialogState } from './task-dialog-state'
 
 const dateFormat = new Intl.DateTimeFormat(undefined, { dateStyle: 'medium' })
@@ -11,18 +13,20 @@ const dateFormat = new Intl.DateTimeFormat(undefined, { dateStyle: 'medium' })
 export function TaskTable({ tasks, onAction }: { tasks: readonly Task[]; onAction: (dialog: TaskDialogState) => void }) {
   const [selection, setSelection] = useState<string[]>([])
   const [confirm, setConfirm] = useState<readonly string[] | null>(null)
-  const bulk = useBulkDeleteTasks()
+  const bulk = useBulkTaskMutation()
+  const [change, setChange] = useState('')
   const lock = useRef(false)
   const selected = tasks.filter(({ id }) => selection.includes(id)).map(({ id }) => id)
   const allSelected = selected.length === tasks.length
 
-  async function removeSelected() {
-    if (!confirm?.length || lock.current) return
+  async function apply(ids: readonly string[], action: BulkTaskAction) {
+    if (!ids.length || lock.current) return
     lock.current = true
     try {
-      const { failed } = await bulk.mutateAsync(confirm)
+      const { failed } = await bulk.mutateAsync({ ids, action })
       setSelection(failed)
       setConfirm(null)
+      if (!failed.length) setChange('')
     } catch {
       // The mutation reports the error and the confirmation remains available for retry.
     } finally {
@@ -30,11 +34,27 @@ export function TaskTable({ tasks, onAction }: { tasks: readonly Task[]; onActio
     }
   }
 
+  function updateSelected() {
+    const status = taskStatuses.find(value => change === 'status:' + value)
+    const priority = taskPriorities.find(value => change === 'priority:' + value)
+    if (status) void apply(selected, { type: 'update', task: { status } })
+    if (priority) void apply(selected, { type: 'update', task: { priority } })
+  }
+
   return (
     <div className="space-y-3">
       <div className="flex flex-wrap items-center gap-2">
         <p role="status" className="mr-2 text-sm text-muted-foreground">{selected.length} selected</p>
         <Button variant="ghost" type="button" disabled={!selected.length || bulk.isPending} onClick={() => setSelection([])}>Clear selection</Button>
+        <TaskSelect aria-label="Bulk task change" className="w-auto" value={change}
+          disabled={!selected.length || bulk.isPending} onChange={event => setChange(event.target.value)}>
+          <option value="">Change selected…</option>
+          <optgroup label="Status">{taskStatuses.map(status => <option key={status} value={'status:' + status}>{statusLabels[status]}</option>)}</optgroup>
+          <optgroup label="Priority">{taskPriorities.map(priority => <option key={priority} value={'priority:' + priority}>{priority} priority</option>)}</optgroup>
+        </TaskSelect>
+        <Button type="button" variant="outline" disabled={!change || !selected.length || bulk.isPending} onClick={updateSelected}>
+          {bulk.isPending && !confirm ? 'Updating…' : 'Apply change'}
+        </Button>
         <AlertDialog.Root open={confirm !== null} onOpenChange={(open) => {
           if (!open && !lock.current) setConfirm(null)
         }}>
@@ -50,7 +70,7 @@ export function TaskTable({ tasks, onAction }: { tasks: readonly Task[]; onActio
               <AlertDialog.Description className="text-sm text-muted-foreground">The selected tasks will be permanently deleted.</AlertDialog.Description>
               <div className="flex justify-end gap-2">
                 <AlertDialog.Cancel asChild><Button type="button" variant="outline" disabled={bulk.isPending}>Cancel</Button></AlertDialog.Cancel>
-                <Button type="button" variant="destructive" disabled={bulk.isPending} onClick={() => void removeSelected()}>
+                <Button type="button" variant="destructive" disabled={bulk.isPending} onClick={() => confirm && void apply(confirm, { type: 'delete' })}>
                   {bulk.isPending ? 'Deleting…' : 'Delete tasks'}
                 </Button>
               </div>

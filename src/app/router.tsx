@@ -8,14 +8,15 @@ import { ForgotPasswordPage } from '@/features/auth/forgot-password-page'
 import { CredentialsPage } from '@/features/auth/credentials-page'
 import { SessionTaskPage } from '@/features/auth/session-task-page'
 import { VerifyEmailPage } from '@/features/auth/verify-email-page'
-import { ProfilePage } from '@/features/profile/profile-page'
-import { DashboardPage } from '@/features/dashboard/pages/dashboard-page'
 import { TaskLoading } from '@/features/tasks/components/task-feedback'
 import { TaskWorkspace } from '@/features/tasks/task-workspace'
-import { TasksPage } from '@/features/tasks/pages/tasks-page'
 import { DesignSystemPage } from '@/pages/design-system-page'
 import { NotFoundPage } from '@/pages/not-found-page'
 
+const ProfilePage = lazy(async () => ({ default: (await import('@/features/profile/profile-page')).ProfilePage }))
+const DashboardPage = lazy(async () => ({ default: (await import('@/features/dashboard/pages/dashboard-page')).DashboardPage }))
+const TasksPage = lazy(async () => ({ default: (await import('@/features/tasks/pages/tasks-page')).TasksPage }))
+const CalendarPage = lazy(async () => ({ default: (await import('@/features/tasks/pages/calendar-page')).CalendarPage }))
 const BoardPage = lazy(async () => ({ default: (await import('@/features/tasks/pages/board-page')).BoardPage }))
 
 export function AppRoutes({ configured }: { configured: boolean }) {
@@ -36,9 +37,10 @@ export function AppRoutes({ configured }: { configured: boolean }) {
         <Route path="auth/session-task" element={<SessionTaskPage />} />
         <Route element={<RequireSession />}>
           <Route element={<TaskWorkspace><AppShell authenticated /></TaskWorkspace>}>
-            <Route path="dashboard" element={<DashboardPage />} />
-            <Route path="profile" element={<ProfilePage />} />
-            <Route path="tasks" element={<TasksPage />} />
+            <Route path="dashboard" element={<Suspense fallback={<TaskLoading label="Loading dashboard" />}><DashboardPage /></Suspense>} />
+            <Route path="profile" element={<Suspense fallback={<TaskLoading label="Loading profile" />}><ProfilePage /></Suspense>} />
+            <Route path="tasks" element={<Suspense fallback={<TaskLoading label="Loading tasks" />}><TasksPage /></Suspense>} />
+            <Route path="calendar" element={<Suspense fallback={<TaskLoading label="Loading calendar" />}><CalendarPage /></Suspense>} />
             <Route path="board" element={<Suspense fallback={<TaskLoading label="Loading board" />}><BoardPage /></Suspense>} />
           </Route>
         </Route>

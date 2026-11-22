@@ -7,7 +7,7 @@ import type { Task } from '../../../../shared/schemas/tasks'
 import { BoardPage } from './board-page'
 import { TasksPage } from './tasks-page'
 
-vi.mock('@clerk/react', () => ({ useAuth: () => ({ getToken: async () => 'test-session' }) }))
+vi.mock('@clerk/react', () => ({ useAuth: () => ({ getToken: async () => 'test-session', userId: 'test-user' }) }))
 const toast = vi.hoisted(() => ({ success: vi.fn(), error: vi.fn() }))
 vi.mock('sonner', () => ({ toast }))
 
@@ -40,9 +40,9 @@ function mount(initial: Task[] = [], failCreate = false, failDelete?: string, in
       return Response.json({ data: result }, { status: 201 })
     }
     if (method === 'PATCH') {
-      expect(single).toBe(true)
-      const result = { ...rows[0], ...JSON.parse(String(options.body)) }
-      rows = [result]
+      const target = path.split('/').at(-1)
+      const result = { ...rows.find(task => task.id === target), ...JSON.parse(String(options.body)) }
+      rows = rows.map(task => task.id === target ? result : task)
       return Response.json({ data: result })
     }
     if (method === 'DELETE') {
@@ -167,4 +167,43 @@ it('opens Table directly from Board and keeps the three view links available', a
   fireEvent.click(screen.getByRole('link', { name: 'List' }))
   expect(screen.queryByRole('table')).toBeNull()
   expect(screen.getByRole('link', { name: 'List' }).getAttribute('aria-current')).toBe('page')
+})
+
+
+it('updates only selected tasks through authenticated status and priority requests', async () => {
+  const other = { ...original, id: '6ecb86a5-9bc7-41f8-a3a7-e9c588062fab', title: 'Leave this task alone' }
+  const mock = mount([original, other])
+  fireEvent.click(screen.getByRole('link', { name: 'Table' }))
+  await screen.findByRole('table')
+  const selectRow = () => fireEvent.click(screen.getByRole('checkbox', { name: 'Select ' + original.title }))
+  selectRow()
+  fireEvent.change(screen.getByLabelText('Bulk task change'), { target: { value: 'status:done' } })
+  fireEvent.click(screen.getByRole('button', { name: 'Apply change' }))
+  await waitFor(() => expect(toast.success).toHaveBeenCalledWith('Updated 1 task.'))
+  await screen.findByText('0 selected')
+  selectRow()
+  fireEvent.change(screen.getByLabelText('Bulk task change'), { target: { value: 'priority:high' } })
+  fireEvent.click(screen.getByRole('button', { name: 'Apply change' }))
+  await waitFor(() => expect(toast.success).toHaveBeenCalledTimes(2))
+  expect(mock.mock.calls.filter(([, options]) => options.method === 'PATCH').map(([url, options]) => [
+    url, JSON.parse(String(options.body)),
+  ])).toEqual([
+    ['/api/v1/tasks/' + original.id, { status: 'done' }],
+    ['/api/v1/tasks/' + original.id, { priority: 'high' }],
+  ])
+})
+
+it('saves, restores, and clears a named filter for the signed-in account', async () => {
+  mount([original])
+  await screen.findByRole('button', { name: original.title })
+  fireEvent.change(screen.getByLabelText('Status'), { target: { value: 'todo' } })
+  fireEvent.change(screen.getByLabelText('Filter name'), { target: { value: 'Open work' } })
+  fireEvent.click(screen.getByRole('button', { name: 'Save filter' }))
+  expect(localStorage.getItem('taskflow-saved-filters:test-user')).toContain('Open work')
+  fireEvent.click(screen.getByRole('button', { name: 'Clear filters' }))
+  fireEvent.change(screen.getByLabelText('Saved filters'), { target: { value: 'Open work' } })
+  fireEvent.click(screen.getByRole('button', { name: 'Restore' }))
+  expect((screen.getByLabelText('Status') as HTMLSelectElement).value).toBe('todo')
+  fireEvent.click(screen.getByRole('button', { name: 'Remove saved filter' }))
+  expect(localStorage.getItem('taskflow-saved-filters:test-user')).toBe('[]')
 })

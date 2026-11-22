@@ -19,9 +19,9 @@ function useTaskApi() {
   return createTaskApi(getToken)
 }
 
-export function useTaskList(query: TaskQuery) {
+export function useTaskList(query: TaskQuery, enabled = true) {
   const api = useTaskApi()
-  return useQuery({ queryKey: taskKeys.list(query), queryFn: ({ signal }) => api.list(query, signal) })
+  return useQuery({ queryKey: taskKeys.list(query), enabled, queryFn: ({ signal }) => api.list(query, signal) })
 }
 
 export function useTaskStats() {
@@ -81,37 +81,43 @@ export function useTaskMutationPending() {
   return useIsMutating({ mutationKey: taskKeys.mutation }) > 0
 }
 
-export function useBulkDeleteTasks() {
+export type BulkTaskAction = { type: 'delete' } | { type: 'update'; task: UpdateTask }
+
+export function useBulkTaskMutation() {
   const { getToken } = useAuth()
   const client = useQueryClient()
   return useMutation({
     mutationKey: taskKeys.mutation,
-    mutationFn: async (ids: readonly string[]) => {
+    mutationFn: async ({ ids, action }: { ids: readonly string[]; action: BulkTaskAction }) => {
       const token = await getToken()
       const api = createTaskApi(async () => token)
       const pending = [...new Set(ids)]
-      const deleted: string[] = []
+      const succeeded: string[] = []
       const failed: string[] = []
-      async function removePending() {
+      async function processPending() {
         for (let id = pending.shift(); id; id = pending.shift()) {
           try {
-            await api.remove(id)
-            deleted.push(id)
+            if (action.type === 'delete') await api.remove(id)
+            else await api.update(id, action.task)
+            succeeded.push(id)
           } catch {
             failed.push(id)
           }
         }
       }
-      await Promise.all(Array.from({ length: Math.min(3, pending.length) }, removePending))
-      return { deleted, failed }
+      await Promise.all(Array.from({ length: Math.min(3, pending.length) }, processPending))
+      return { succeeded, failed }
     },
-    onSuccess: async ({ deleted, failed }) => {
-      for (const id of deleted) client.removeQueries({ queryKey: taskKeys.item(id), exact: true })
+    onSuccess: async ({ succeeded, failed }, { action }) => {
+      if (action.type === 'delete') {
+        for (const id of succeeded) client.removeQueries({ queryKey: taskKeys.item(id), exact: true })
+      }
       await client.invalidateQueries({ queryKey: root })
+      const verb = action.type === 'delete' ? 'Deleted' : 'Updated'
       if (failed.length) {
-        toast.error(`Deleted ${deleted.length} of ${deleted.length + failed.length} tasks. ${failed.length} could not be deleted.`)
+        toast.error(`${verb} ${succeeded.length} of ${succeeded.length + failed.length} tasks. ${failed.length} could not be ${verb.toLowerCase()}.`)
       } else {
-        toast.success(`Deleted ${deleted.length} ${deleted.length === 1 ? 'task' : 'tasks'}.`)
+        toast.success(`${verb} ${succeeded.length} ${succeeded.length === 1 ? 'task' : 'tasks'}.`)
       }
     },
     onError: (error) => toast.error(taskErrorMessage(error)),

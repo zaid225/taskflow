@@ -33,7 +33,7 @@ try {
     assert.equal((await response.json()).error.code, 'NOT_FOUND')
   }
 
-  for (const path of ['/', '/dashboard', '/tasks', '/board', '/profile', '/sign-in', '/sign-up', '/forgot-password', '/reset-password', '/sso-callback']) {
+  for (const path of ['/', '/dashboard', '/tasks', '/board', '/calendar', '/profile', '/sign-in', '/sign-up', '/forgot-password', '/reset-password', '/sso-callback']) {
     const response = await fetch(origin + path, { headers: { Accept: 'text/html' } })
     assert.equal(response.status, 200, path)
     assert.match(response.headers.get('content-type') ?? '', /text\/html/)
